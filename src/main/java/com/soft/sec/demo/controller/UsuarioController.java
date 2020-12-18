@@ -6,13 +6,10 @@ import com.soft.sec.demo.repository.UsuarioRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/")
@@ -20,21 +17,19 @@ import java.util.stream.Collectors;
 public class UsuarioController {
 	UsuarioRepository usuarioRepository;
 
-	@GetMapping("/login")
-	public ResponseEntity<Boolean> login(@RequestParam(name = "login") String login,
-	                                     @RequestParam(name = "senha") String senha) {
-		var usuario = this.usuarioRepository.findByLogin(login);
-		if (usuario.isEmpty()) return ResponseEntity.ok(Boolean.FALSE);
-		boolean senhaIgual = new BCryptPasswordEncoder().matches(senha, usuario.get().getSenha());
+	@PostMapping("/login")
+	public ResponseEntity<Boolean> login(@RequestBody Usuario usuario) {
+		var user = this.usuarioRepository.findByLogin(usuario.getLogin());
+		if (user.isEmpty()) return ResponseEntity.ok(Boolean.FALSE);
+		boolean senhaIgual = new BCryptPasswordEncoder().matches(usuario.getSenha(), user.get().getSenha());
 
 		return ResponseEntity.ok(senhaIgual);
 	}
 
-	@GetMapping("/signup")
-	public ResponseEntity<UsuarioPresenter> signup(@RequestParam(name = "login") String login,
-	                                     @RequestParam(name = "senha") String senha) {
-		var senhaCriptografada = new BCryptPasswordEncoder().encode(senha);
-		var user = new Usuario(login, senhaCriptografada);
+	@PostMapping("/signup")
+	public ResponseEntity<UsuarioPresenter> signup(@RequestBody Usuario usuario) {
+		var senhaCriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
+		var user = new Usuario(usuario.getLogin(), senhaCriptografada);
 		var usuarioCriado = this.usuarioRepository.save(user);
 		return ResponseEntity.ok(new UsuarioPresenter(usuarioCriado));
 	}
